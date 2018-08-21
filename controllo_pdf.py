@@ -29,4 +29,4 @@ with open('url_controllati.csv', 'w') as f:
 			print('Unknown type: {}'.format(content_type))
 
 		writer.writerow({'url': url, 'estensione': ext})
-		f.close()
+f.close()
