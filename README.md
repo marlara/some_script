@@ -1,2 +1,2 @@
 # some_script
-Random script
+Random scripts I've done so far.
