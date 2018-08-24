@@ -37,5 +37,15 @@ r.close()
 	else:
 		print("No PDF")
 		file.writerow([url,"No PDF"])
-f.close()
-r.close()'''
+
+
+#that's for searching into nested elements
+
+for url in start_urls:
+	r = requests.get(url)
+	soup = BeautifulSoup(r.text, "lxml")
+	url_pdf = soup.find("p", class_="downloadPDF").a["href"]
+	print(url_pdf)
+	file.writerow([url, url_pdf])
+
+'''
