@@ -83,4 +83,3 @@ for l in record_list: #this list has all the record-based json of each item sear
 
 	f.writerow([title, id_, type_, subject, contributor, description, publisher, date, pages, source, language, coverage, rights, ifffUrl, immagine, issue, dataset])
 print("YEY I'VE DONE! :)")
-# https://www.europeana.eu/portal/it/search?page=80&q=edm_datasetName%3A92%2Aewspapers%2A&qf%5B%5D=berliner+borsenzeitung
