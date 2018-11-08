@@ -34,7 +34,7 @@ while True:
 print("I've done! Now I'll start with records")
 file_log.close()
 
-'''Now we have searched every items we want with a search-type api (https://pro.europeana.eu/resources/apis/search), but lots of metadata are in the record-type api(https://pro.europeana.eu/resources/apis/record), so we have to move into the record-based search"
+'''Now we have searched every items we want with a search-type api (https://pro.europeana.eu/resources/apis/search), but lots of metadata are in the record-type api(https://pro.europeana.eu/resources/apis/record), so we have to move into the record-based search'''
 
 for l in record_list: #this list has all the record-based json of each item searched
 	print(l) #now print the link to check it
