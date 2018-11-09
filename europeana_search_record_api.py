@@ -20,17 +20,20 @@ while True:
 	file_log.write("\n")
 	response = requests.get(url) #get the url
 	data = response.json() #pass the url to the json reader
-	if data["success"] == True: #if the api call success
-		for i in data["items"]: #for each item in page
-			link = i["link"] #take the url of the record-based json
-			record_list.append(link) #and append it to the list
-			file_log.write(link) 
-			file_log.write("\n")
-		cursor = data["nextCursor"] #also, get the "nexCursor" value
-	else: #if the api call fail
-		print(data["error"]) #print the error message
-		file_log.write("In" + url + "I had this error: " + error) #log error into file
-		pass #then pass to the next
+	try: 
+		if data["success"] == True: #if the api call success
+			for i in data["items"]: #for each item in page
+				link = i["link"] #take the url of the record-based json
+				record_list.append(link) #and append it to the list
+				file_log.write(link) 
+				file_log.write("\n")
+			cursor = data["nextCursor"] #also, get the "nexCursor" value
+		else: #if the api call fail
+			print(data["error"]) #print the error message
+			file_log.write("In" + url + "I had this error: " + error) #log error into file
+			pass #then pass to the next
+	except:
+		break #this is to pass to the other section of the script
 print("I've done! Now I'll start with records")
 file_log.close()
 
