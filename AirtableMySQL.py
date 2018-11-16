@@ -7,7 +7,7 @@ import csv
 
 #Mess with dates: Airtable has some issues on date format with various bugs reported, so the only solution is to pass the date as strings and change formats couple of times to match the mySQL date format
 
-API_KEY = 'keyXXXX' #you API key
+API_KEY = 'keyXXXX' #your API key
 BASE_ID = 'appXXXX' #take the id from https://airtable.com/api 
 
 class myScript:
