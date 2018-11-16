@@ -56,7 +56,7 @@ class myScript:
         cnx.close()
 
     def searchCsv(self): #insert unique records from csv file (attachment) gotten before
-            newFile = self.attachment.replace("E:\\adm", "http://adm.openmlol.it").replace("\\","/")
+            newFile = self.attachment.replace("E:\\adm", "http://url.it").replace("\\","/")
             print(newFile)
             s = requests.Session() #for Session() see http://docs.python-requests.org/en/master/user/advanced/
             download = s.get(newFile) #get the file from url
