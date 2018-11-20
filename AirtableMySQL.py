@@ -11,6 +11,9 @@ API_KEY = 'keyXXXX' #your API key
 BASE_ID = 'appXXXX' #take the id from https://airtable.com/api 
 
 class myScript:
+    def __init__(self):
+        self.commandStop = False #this set the command to Stop the script if Airtable is already updated
+               
     def searchAirtable(self):
         self.at = airtable.Airtable(BASE_ID, 'tblXXX', api_key = API_KEY) #table id
 
@@ -37,13 +40,16 @@ class myScript:
             cursor = cnx.cursor()
             query = ("SELECT Id, WorkedFilePath, FileRowCount, DateCreation FROM mediaimportrequest WHERE DateCreation>%s") #%s is the variable
             dateLimit = self.toDate
-            cursor.execute(query, (dateLimit,)) #assign dateLimit to the variable, COMMA IS IMPORTANT
-            for (Id,FileRowCount,WorkedFilePath,DateCreation) in cursor:
-                print("Id: {}, Items:{}, File: {}, DateCreation: {}".format(Id,FileRowCount,WorkedFilePath,DateCreation))
-                self.date = DateCreation.isoformat() #the date format is converted to isoformat
-                self.date = datetime.strftime(DateCreation, '%d/%m/%Y') #and now the isoformat is converted into a string with the right format
-                self.num_risorse = WorkedFilePath
-                self.attachment = FileRowCount
+            try: #try to catch the not updated items on Airtable based on dateLimit
+                cursor.execute(query, (dateLimit,)) #assign dateLimit to the variable, COMMA IS IMPORTANT
+                for (Id,FileRowCount,WorkedFilePath,DateCreation) in cursor:
+                    print("Id: {}, Items:{}, File: {}, DateCreation: {}".format(Id,FileRowCount,WorkedFilePath,DateCreation))
+                    self.date = DateCreation.isoformat() #the date format is converted to isoformat
+                    self.date = datetime.strftime(DateCreation, '%d/%m/%Y') #and now the isoformat is converted into a string with the right format
+                    self.num_risorse = WorkedFilePath
+                    self.attachment = FileRowCount
+            except:
+                self.commandStop = True #set the command to stop if the try fails
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
                 print('Something is wrong with your user name or password')
@@ -87,11 +93,17 @@ class myScript:
             'Nome Collezione': ';'.join(list(set(self.nome_coll))),
             })
         print(records)
+    
+    def conditionToGo(self): #function that make the script stop or continue based on commandStop
+        if self.commandStop == False:
+            print('Airtable already updated!')
+        else:
+            s.searchCsv()
+            s.insertAirtable()
 
 s = myScript()
 s.searchAirtable()
 s.mySqlCode()
-s.searchCsv()
-s.insertAirtable()
+s.conditionToGo()
 
 
