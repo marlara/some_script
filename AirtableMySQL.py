@@ -95,7 +95,7 @@ class myScript:
         print(records)
     
     def conditionToGo(self): #function that make the script stop or continue based on commandStop
-        if self.commandStop == False:
+        if self.commandStop == True:
             print('Airtable already updated!')
         else:
             s.searchCsv()
