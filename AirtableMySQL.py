@@ -69,15 +69,16 @@ class myScript:
             decoded_content = download.content.decode('utf-8') #decode in utf-8
 
             csvFile = csv.DictReader(decoded_content.splitlines(), delimiter='\t')  #read the csv file and set delimiter, splitlines saves the day
-
+            csvFile.fieldnames = [field.strip().lower() for field in csvFile.fieldnames]
+            
             self.publisher = [] #create a list for each value we want
             self.tipologia = []
             self.nome_coll = []
 
             for row in csvFile:
-                self.tipologia.append(row['Type']) #this append the values from the right column to the list
-                self.publisher.append(row["Publisher"])
-                self.nome_coll.append(row["Nome_Coll"])
+                self.tipologia.append(row['type']) #this append the values from the right column to the list
+                self.publisher.append(row["publisher"])
+                self.nome_coll.append(row["nome_coll"])
 
             print(set(self.tipologia)) #set gets the unique values of a list
             print(set(self.publisher))
