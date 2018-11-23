@@ -17,16 +17,19 @@ class myScript:
     def searchAirtable(self):
         self.at = airtable.Airtable(BASE_ID, 'tblXXX', api_key = API_KEY) #table id
 
-        item_list = enumerate(self.at.get_all()) #enumerate table items
-        last_item = self.at.get_all()[-1] #take the last item
-        #enumerate works, but working with createdTime could be more exact
+        item_list = enumerate(self.at.get_all(sort='CreatedTime')) #enumerate table items and sort by CreatedTime column (there's a function for this: https://support.airtable.com/hc/en-us/articles/215646218-Formulas-and-date-fields)
+        last_item = self.at.get_all(sort='CreatedTime')[-1] #take the last item
         print(last_item)
-        dateAirtable = last_item['fields']['Date'] #gets date value
-        print(dateAirtable)
-        self.toDate = datetime.strptime(dateAirtable, '%d/%m/%Y').strftime('%Y-%m-%d') #here it takes the string in Date and parse it as a date, then it convert it into a string with the format that will match the mySQL format for dates
+        fieldDate = last_item['fields']['Date'] #gets date value
+        self.dateAirtable = datetime.strptime(fieldDate, '%d/%m/%Y').isoformat()
+        print('Date Aitable: '+self.dateAirtable)
+        self.toDate = datetime.strptime(fieldDate, '%d/%m/%Y').replace(hour=23, minute=59).strftime('%Y-%m-%d %H:%M:%S') #here it takes the string in Date and parse it as a date, then it convert it into a string with the format that will match the mySQL format for dates, replace hours because if I didn't do that it takes the same record from mysql db
         print(self.toDate)
 
     def mySqlCode(self):
+        self.date = []
+        self.num_risorse = []
+        self.attachment = []
         config = {
             'user': XXX,
             'password': XXX,
@@ -37,17 +40,16 @@ class myScript:
         cnx = cur = None
         try:
             cnx = mysql.connector.connect(**config)
-            cursor = cnx.cursor()
+            cursor = cnx.cursor(buffered=True) #buffered True is important for the condition of cursor.execute
             query = ("SELECT Id, WorkedFilePath, FileRowCount, DateCreation FROM mediaimportrequest WHERE DateCreation>%s") #%s is the variable
             dateLimit = self.toDate
             try: #try to catch the not updated items on Airtable based on dateLimit
                 cursor.execute(query, (dateLimit,)) #assign dateLimit to the variable, COMMA IS IMPORTANT
                 for (Id,FileRowCount,WorkedFilePath,DateCreation) in cursor:
                     print("Id: {}, Items:{}, File: {}, DateCreation: {}".format(Id,FileRowCount,WorkedFilePath,DateCreation))
-                    self.date = DateCreation.isoformat() #the date format is converted to isoformat
-                    self.date = datetime.strftime(DateCreation, '%d/%m/%Y') #and now the isoformat is converted into a string with the right format
-                    self.num_risorse = WorkedFilePath
-                    self.attachment = FileRowCount
+                    self.date.append(datetime.strftime(DateCreation, '%d/%m/%Y')) #and now the isoformat is converted into a string with the right format
+                    self.num_risorse.append(WorkedFilePath)
+                    self.attachment.append(FileRowCount)
             except:
                 self.commandStop = True #set the command to stop if the try fails
         except mysql.connector.Error as err:
@@ -62,40 +64,48 @@ class myScript:
         cnx.close()
 
     def searchCsv(self): #insert unique records from csv file (attachment) gotten before
-            newFile = self.attachment.replace("E:\\adm", "http://url.it").replace("\\","/")
-            print(newFile)
-            s = requests.Session() #for Session() see http://docs.python-requests.org/en/master/user/advanced/
-            download = s.get(newFile) #get the file from url
+            self.publisher = [] #create lists for each value we want
+        self.tipologia = []
+        self.nome_coll = []
+        for rec in self.attachment:
+            publisher = []
+            tipologia = []
+            nome_coll = []
+            newFile = rec.replace("E:\\adm", "http://url").replace("\\","/").replace(" ", "%20") #compose url to download the csv, eventually whitespaces could be inserted into namefiles
+            print("I'm searching in "+newFile)
+            download = requests.get(newFile) #get the file from url
             decoded_content = download.content.decode('utf-8') #decode in utf-8
 
             csvFile = csv.DictReader(decoded_content.splitlines(), delimiter='\t')  #read the csv file and set delimiter, splitlines saves the day
             csvFile.fieldnames = [field.strip().lower() for field in csvFile.fieldnames]
-            
-            self.publisher = [] #create a list for each value we want
-            self.tipologia = []
-            self.nome_coll = []
-
             for row in csvFile:
-                self.tipologia.append(row['type']) #this append the values from the right column to the list
-                self.publisher.append(row["publisher"])
-                self.nome_coll.append(row["nome_coll"])
-
-            print(set(self.tipologia)) #set gets the unique values of a list
-            print(set(self.publisher))
-            print(set(self.nome_coll))
+                tipologia.append(row['type']) #this append the values from the right column to the list
+                publisher.append(row["publisher"])
+                nome_coll.append(row["nome_coll"])
+            self.publisher.append(list(set(publisher)))
+            self.tipologia.append(list(set(tipologia)))
+            self.nome_coll.append(list(set(nome_coll)))
+        print(self.publisher)
+        print(self.tipologia)
+        print(self.nome_coll)
 
     def insertAirtable(self): #insert records from mySQL metadata
-        records = self.at.insert({ 
-            'Date': self.date,
-            'Numero di risorse': self.num_risorse,
-            'Attachments': self.attachment,
-            'Tipologia': ';'.join(list(set(self.tipologia))), #';'.join convert the list into a string, with ; for multiple values
-            'Publisher': ';'.join(list(set(self.publisher))),
-            'Nome Collezione': ';'.join(list(set(self.nome_coll))),
-            })
-        print(records)
-    
-    def conditionToGo(self): #function that make the script stop or continue based on commandStop
+        i = 0
+        for item in self.attachment:
+            tmpv = self.at.insert({ 
+               'Date': self.date[i],
+               'Numero di risorse': self.num_risorse[i],
+               'Attachments': self.attachment[i],
+               'Tipologia': self.tipologia[i],
+               'Publisher':  ';'.join(self.publisher[i]), #join is needed to transform into string, if not Airtable will return an error
+                'Nome Collezione': ''.join(self.nome_coll[i]),
+                })
+            print(tmpv)
+            print(i)
+            i+=1
+        print("I've done!")
+        
+        def conditionToGo(self):
         if self.commandStop == True:
             print('Airtable already updated!')
         else:
